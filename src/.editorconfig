@@ -41,6 +41,9 @@ dotnet_style_qualification_for_property               = true : suggestion
 dotnet_style_qualification_for_method                 = false : suggestion
 dotnet_style_qualification_for_event                  = true : suggestion
 
+# IDE0180: Use tuple to swap values
+csharp_style_prefer_tuple_swap = false
+
 [*.{cpp,h}]
 indent_size              = 4
 indent_style             = space
