@@ -10,14 +10,18 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove="ARM64\**" />
+    <Compile Remove="MozJpegFileTypeIO\**" />
     <Compile Remove="Release\**" />
     <Compile Remove="x64\**" />
     <EmbeddedResource Remove="ARM64\**" />
+    <EmbeddedResource Remove="MozJpegFileTypeIO\**" />
     <EmbeddedResource Remove="Release\**" />
     <EmbeddedResource Remove="x64\**" />
     <None Remove="ARM64\**" />
+    <None Remove="MozJpegFileTypeIO\**" />
     <None Remove="Release\**" />
     <None Remove="x64\**" />
+    <Page Remove="MozJpegFileTypeIO\**" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="PaintDotNet.Base">
