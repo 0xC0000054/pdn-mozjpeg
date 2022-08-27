@@ -24,8 +24,9 @@ See [License.txt](License.txt) for more information.
 
 ## Prerequisites
 
-* Visual Studio 2019
-* Paint.NET 4.2.16 or later
+* Visual Studio 2022
+* Paint.NET 4.3.12 or later
+* The `mozjpeg` package from [VCPkg](https://github.com/microsoft/vcpkg).
 
 ## Building the plugin
 
@@ -33,9 +34,3 @@ See [License.txt](License.txt) for more information.
 * Change the PaintDotNet references in the MozJpegFileType project to match your Paint.NET install location
 * Update the post build events to copy the build output to the Paint.NET FileTypes folder
 * Build the solution
-
-## 3rd Party Code
-
-This project uses the following libraries. (the required header and library files are located in the `3rd-party` sub-folders).
-
-* [mozjpeg](https://github.com/mozilla/mozjpeg) (v4.0.3 tag)
