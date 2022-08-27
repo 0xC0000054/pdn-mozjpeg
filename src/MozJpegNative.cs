@@ -15,6 +15,7 @@ using PaintDotNet;
 using PaintDotNet.AppModel;
 using System;
 using System.IO;
+using System.Runtime.InteropServices;
 
 namespace MozJpegFileType
 {
@@ -37,11 +38,15 @@ namespace MozJpegFileType
                 JpegLibraryErrorInfo errorInfo = new JpegLibraryErrorInfo();
                 DecodeStatus status = DecodeStatus.Ok;
 
-                if (IntPtr.Size == 8)
+                if (RuntimeInformation.ProcessArchitecture == Architecture.X64)
                 {
                     status = MozJpeg_X64.ReadImage(callbacks, ref errorInfo);
                 }
-                else if (IntPtr.Size == 4)
+                else if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
+                {
+                    status = MozJpeg_Arm64.ReadImage(callbacks, ref errorInfo);
+                }
+                else if (RuntimeInformation.ProcessArchitecture == Architecture.X86)
                 {
                     status = MozJpeg_X86.ReadImage(callbacks, ref errorInfo);
                 }
@@ -148,7 +153,7 @@ namespace MozJpegFileType
                 EncodeStatus status = EncodeStatus.Ok;
                 JpegLibraryErrorInfo errorInfo = new JpegLibraryErrorInfo();
 
-                if (IntPtr.Size == 8)
+                if (RuntimeInformation.ProcessArchitecture == Architecture.X64)
                 {
                     status = MozJpeg_X64.WriteImage(ref bitmap,
                                                     ref encodeOptions,
@@ -157,7 +162,16 @@ namespace MozJpegFileType
                                                     progressCallback,
                                                     writeCallback);
                 }
-                else if (IntPtr.Size == 4)
+                else if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
+                {
+                    status = MozJpeg_Arm64.WriteImage(ref bitmap,
+                                                      ref encodeOptions,
+                                                      metadata,
+                                                      ref errorInfo,
+                                                      progressCallback,
+                                                      writeCallback);
+                }
+                else if (RuntimeInformation.ProcessArchitecture == Architecture.X86)
                 {
                     status = MozJpeg_X86.WriteImage(ref bitmap,
                                                     ref encodeOptions,
