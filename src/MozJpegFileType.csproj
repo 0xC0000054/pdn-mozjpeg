@@ -1,37 +1,24 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>8.0.30703</ProductVersion>
-    <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{CCE7E6C5-B93B-4F37-96EE-620B82F11431}</ProjectGuid>
+    <TargetFramework>net6.0-windows</TargetFramework>
     <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>MozJpegFileType</RootNamespace>
-    <AssemblyName>MozJpegFileType</AssemblyName>
-    <TargetFrameworkVersion>v4.7</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <UseWindowsForms>true</UseWindowsForms>
+    <UseWPF>true</UseWPF>
+    <ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-  </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="ARM64\**" />
+    <Compile Remove="Release\**" />
+    <Compile Remove="x64\**" />
+    <EmbeddedResource Remove="ARM64\**" />
+    <EmbeddedResource Remove="Release\**" />
+    <EmbeddedResource Remove="x64\**" />
+    <None Remove="ARM64\**" />
+    <None Remove="Release\**" />
+    <None Remove="x64\**" />
+  </ItemGroup>
   <ItemGroup>
     <Reference Include="PaintDotNet.Base">
       <HintPath>..\..\..\..\..\..\..\Program Files\paint.net\PaintDotNet.Base.dll</HintPath>
@@ -42,68 +29,11 @@
     <Reference Include="PaintDotNet.Data">
       <HintPath>..\..\..\..\..\..\..\Program Files\paint.net\PaintDotNet.Data.dll</HintPath>
     </Reference>
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Xml" />
-    <Reference Include="System.Drawing" />
-    <Reference Include="System.Windows.Forms" />
-    <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Exif\EndianBinaryReader.cs" />
-    <Compile Include="Exif\Endianess.cs" />
-    <Compile Include="Exif\EndianUtil.cs" />
-    <Compile Include="Exif\ExifColorSpace.cs" />
-    <Compile Include="Exif\ExifParser.cs" />
-    <Compile Include="Exif\ExifTagHelper.cs" />
-    <Compile Include="Exif\ExifValueCollection.cs" />
-    <Compile Include="Exif\ExifWriter.cs" />
-    <Compile Include="Exif\IFDEntry.cs" />
-    <Compile Include="Exif\MetadataEntry.cs" />
-    <Compile Include="Exif\MetadataHelpers.cs" />
-    <Compile Include="Exif\MetadataKey.cs" />
-    <Compile Include="Exif\MetadataKeys.cs" />
-    <Compile Include="Exif\MetadataSection.cs" />
-    <Compile Include="Exif\TagDataType.cs" />
-    <Compile Include="Exif\TagDataTypeUtil.cs" />
-    <Compile Include="Exif\TiffConstants.cs" />
-    <Compile Include="ImageTransform.cs" />
-    <Compile Include="Interop\BitmapData.cs" />
-    <Compile Include="Interop\CallbackDelegates.cs" />
-    <Compile Include="Interop\DecodeStatus.cs" />
-    <Compile Include="Interop\EncodeOptions.cs" />
-    <Compile Include="Interop\EncodeStatus.cs" />
-    <Compile Include="Interop\JpegLibraryErrorInfo.cs" />
-    <Compile Include="Interop\MetadataCustomMarshaler.cs" />
-    <Compile Include="Interop\MetadataParams.cs" />
-    <Compile Include="Interop\MetadataType.cs" />
-    <Compile Include="Interop\MozJpegLoadState.cs" />
-    <Compile Include="Interop\MozJpegStreamIO.cs" />
-    <Compile Include="Interop\MozJpeg_X86.cs" />
-    <Compile Include="Interop\MozJpeg_X64.cs" />
-    <Compile Include="Interop\ReadCallbacks.cs" />
-    <Compile Include="MozJpegFile.cs" />
-    <Compile Include="MozJpegFileType.cs" />
-    <Compile Include="MozJpegFileTypeFactory.cs" />
-    <Compile Include="MozJpegNative.cs" />
-    <Compile Include="PluginSupportInfo.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="ChromaSubsampling.cs" />
-    <Compile Include="Xmp\ExtendedXmpChunk.cs" />
-    <Compile Include="Xmp\ExtendedXmpData.cs" />
-    <Compile Include="Xmp\XmpUtils.cs" />
+    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
   </ItemGroup>
-  <ItemGroup />
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <PropertyGroup>
-    <PostBuildEvent>copy "$(TargetPath)" "D:\Program Files\paint.net\FileTypes" /y</PostBuildEvent>
-  </PropertyGroup>
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="copy &quot;$(TargetPath)&quot; &quot;D:\Program Files\paint.net\FileTypes&quot; /y" />
   </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
 </Project>
