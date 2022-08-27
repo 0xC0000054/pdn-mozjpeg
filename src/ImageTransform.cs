@@ -63,7 +63,7 @@ namespace MozJpegFileType
 
                 for (int y = 0; y < temp.Height; y++)
                 {
-                    ColorBgra* dstPtr = temp.GetRowAddressUnchecked(y);
+                    ColorBgra* dstPtr = temp.GetRowPointerUnchecked(y);
 
                     for (int x = 0; x < temp.Width; x++)
                     {
@@ -109,7 +109,7 @@ namespace MozJpegFileType
 
                 for (int y = 0; y < temp.Height; y++)
                 {
-                    ColorBgra* dstPtr = temp.GetRowAddressUnchecked(y);
+                    ColorBgra* dstPtr = temp.GetRowPointerUnchecked(y);
 
                     for (int x = 0; x < temp.Width; x++)
                     {

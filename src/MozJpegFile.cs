@@ -17,6 +17,7 @@ using PaintDotNet;
 using PaintDotNet.AppModel;
 using PaintDotNet.Collections;
 using PaintDotNet.Imaging;
+using PaintDotNet.Rendering;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -63,10 +64,8 @@ namespace MozJpegFileType
             ProgressEventHandler progressCallback,
             IArrayPoolService arrayPool)
         {
-            using (RenderArgs args = new RenderArgs(scratchSurface))
-            {
-                input.Render(args, true);
-            }
+            scratchSurface.Clear();
+            input.CreateRenderer().Render(scratchSurface);
 
             if (IsGrayscale(scratchSurface))
             {
@@ -285,7 +284,7 @@ namespace MozJpegFileType
         {
             for (int y = 0; y < surface.Height; y++)
             {
-                ColorBgra* ptr = surface.GetRowAddressUnchecked(y);
+                ColorBgra* ptr = surface.GetRowPointerUnchecked(y);
                 ColorBgra* ptrEnd = ptr + surface.Width;
 
                 while (ptr < ptrEnd)
