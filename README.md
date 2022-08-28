@@ -5,7 +5,7 @@ A [Paint.NET](http://www.getpaint.net) filetype plugin that saves JPEG images us
 ## Installation
 
 1. Close Paint.NET.
-2. Place MozJpegFileType.dll, MozJpegFileTypeIO_x86.dll and MozJpegFileTypeIO_x64.dll in the Paint.NET FileTypes folder which is usually located in one the following locations depending on the Paint.NET version you have installed.
+2. Place MozJpegFileType.dll, MozJpegFileTypeIO_x86.dll, MozJpegFileTypeIO_ARM64.dll and MozJpegFileTypeIO_x64.dll in the Paint.NET FileTypes folder which is usually located in one the following locations depending on the Paint.NET version you have installed.
 
   Paint.NET Version |  FileTypes Folder Location
   --------|----------
