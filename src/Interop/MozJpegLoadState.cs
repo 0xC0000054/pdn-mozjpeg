@@ -95,29 +95,39 @@ namespace MozJpegFileType.Interop
             return xmpPacket;
         }
 
-        public void SetMetadata(IntPtr data, int size, MetadataType type)
+        public bool SetMetadata(IntPtr data, int size, MetadataType type)
         {
-            byte[] bytes = new byte[size];
-
-            Marshal.Copy(data, bytes, 0, size);
-
-            switch (type)
+            try
             {
-                case MetadataType.Exif:
-                    this.exifBytes = bytes;
-                    break;
-                case MetadataType.Icc:
-                    this.iccProfileBytes = bytes;
-                    break;
-                case MetadataType.StandardXmp:
-                    this.standardXmpBytes = bytes;
-                    break;
-                case MetadataType.ExtendedXmp:
-                    this.extendedXmpBytes.Add(bytes);
-                    break;
-                default:
-                    break;
+                byte[] bytes = new byte[size];
+
+                Marshal.Copy(data, bytes, 0, size);
+
+                switch (type)
+                {
+                    case MetadataType.Exif:
+                        this.exifBytes = bytes;
+                        break;
+                    case MetadataType.Icc:
+                        this.iccProfileBytes = bytes;
+                        break;
+                    case MetadataType.StandardXmp:
+                        this.standardXmpBytes = bytes;
+                        break;
+                    case MetadataType.ExtendedXmp:
+                        this.extendedXmpBytes.Add(bytes);
+                        break;
+                    default:
+                        break;
+                }
             }
+            catch (Exception ex)
+            {
+                this.ExceptionInfo = ExceptionDispatchInfo.Capture(ex);
+                return false;
+            }
+
+            return true;
         }
 
         private XmpPacket TryMergeExtendedXmp(XDocument standardXmp, string extendedXmpGuid)

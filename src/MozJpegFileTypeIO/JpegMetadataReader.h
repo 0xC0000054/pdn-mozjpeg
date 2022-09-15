@@ -17,4 +17,4 @@
 #include <jpeglib.h>
 #include <jerror.h>
 
-void ReadMetadata(j_decompress_ptr cinfo, const ReadCallbacks* callbacks);
+DecodeStatus ReadMetadata(j_decompress_ptr cinfo, const ReadCallbacks* callbacks);

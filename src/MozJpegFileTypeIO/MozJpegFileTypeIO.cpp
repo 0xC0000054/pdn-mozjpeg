@@ -129,7 +129,7 @@ DecodeStatus ReadImage(
     {
         jpeg_destroy_decompress(&cinfo);
 
-        return DecodeStatus::OutOfMemory;
+        return DecodeStatus::CallbackError;
     }
 
     const size_t jpegRowBufferSize = static_cast<size_t>(cinfo.output_width) * static_cast<size_t>(cinfo.output_components);
@@ -175,12 +175,12 @@ DecodeStatus ReadImage(
         destRow++;
     }
 
-    ReadMetadata(&cinfo, callbacks);
+    DecodeStatus status = ReadMetadata(&cinfo, callbacks);
 
     jpeg_finish_decompress(&cinfo);
     jpeg_destroy_decompress(&cinfo);
 
-    return DecodeStatus::Ok;
+    return status;
 }
 
 EncodeStatus WriteImage(

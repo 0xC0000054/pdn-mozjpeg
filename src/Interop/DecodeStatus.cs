@@ -18,6 +18,7 @@ namespace MozJpegFileType.Interop
         NullParameter,
         OutOfMemory,
         JpegLibraryError,
+        CallbackError,
         UserCanceled
     }
 }

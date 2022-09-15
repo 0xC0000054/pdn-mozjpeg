@@ -32,7 +32,7 @@ enum class MetadataType : int
     ExtendedXmp
 };
 
-typedef void(__stdcall* SetMetadataCallback)(const void* buffer, int32_t size, MetadataType type);
+typedef bool(__stdcall* SetMetadataCallback)(const void* buffer, int32_t size, MetadataType type);
 
 struct ReadCallbacks
 {
@@ -48,6 +48,7 @@ enum class DecodeStatus : int
     NullParameter,
     OutOfMemory,
     JpegLibraryError,
+    CallbackError,
     UserCanceled
 };
 

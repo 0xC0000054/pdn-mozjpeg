@@ -16,7 +16,7 @@
 
 namespace
 {
-    void ReadApp1Blocks(j_decompress_ptr cinfo, const ReadCallbacks* callbacks)
+    DecodeStatus ReadApp1Blocks(j_decompress_ptr cinfo, const ReadCallbacks* callbacks)
     {
         constexpr int App1Marker = JPEG_APP0 + 1;
 
@@ -51,10 +51,13 @@ namespace
                     if (exifLength > 0 &&
                         exifLength <= static_cast<unsigned int>(std::numeric_limits<int32_t>::max()))
                     {
-                        callbacks->setMetadata(
+                        if (!callbacks->setMetadata(
                             marker->data + ExifSignatureLength,
                             static_cast<int32_t>(exifLength),
-                            MetadataType::Exif);
+                            MetadataType::Exif))
+                        {
+                            return DecodeStatus::CallbackError;
+                        }
                         setExif = true;
                     }
                 }
@@ -71,10 +74,13 @@ namespace
                     if (xmpLength > 0 &&
                         xmpLength <= static_cast<unsigned int>(std::numeric_limits<int32_t>::max()))
                     {
-                        callbacks->setMetadata(
+                        if (!callbacks->setMetadata(
                             marker->data + StandardXmpSignatureLength,
                             static_cast<int32_t>(xmpLength),
-                            MetadataType::StandardXmp);
+                            MetadataType::StandardXmp))
+                        {
+                            return DecodeStatus::CallbackError;
+                        }
                         setStandardXmp = true;
                     }
                 }
@@ -86,36 +92,54 @@ namespace
                     if (extendedXmpLength > 0 &&
                         extendedXmpLength <= static_cast<unsigned int>(std::numeric_limits<int32_t>::max()))
                     {
-                        callbacks->setMetadata(
+                        if (!callbacks->setMetadata(
                             marker->data + ExtendedXmpSignatureLength,
                             static_cast<int32_t>(extendedXmpLength),
-                            MetadataType::ExtendedXmp);
+                            MetadataType::ExtendedXmp))
+                        {
+                            return DecodeStatus::CallbackError;
+                        }
                     }
                 }
             }
         }
+
+        return DecodeStatus::Ok;
     }
 
-    void ReadIccProfile(j_decompress_ptr cinfo, const ReadCallbacks* callbacks)
+    DecodeStatus ReadIccProfile(j_decompress_ptr cinfo, const ReadCallbacks* callbacks)
     {
         JOCTET* iccProfile;
         unsigned int iccProfileSize;
+
+        DecodeStatus status = DecodeStatus::Ok;
 
         if (jpeg_read_icc_profile(cinfo, &iccProfile, &iccProfileSize))
         {
             if (iccProfileSize > 0 &&
                 iccProfileSize <= static_cast<unsigned int>(std::numeric_limits<int32_t>::max()))
             {
-                callbacks->setMetadata(iccProfile, static_cast<int32_t>(iccProfileSize), MetadataType::Icc);
+                if (!callbacks->setMetadata(iccProfile, static_cast<int32_t>(iccProfileSize), MetadataType::Icc))
+                {
+                    status = DecodeStatus::CallbackError;
+                }
             }
 
             free(iccProfile);
         }
+
+        return status;
     }
 }
 
-void ReadMetadata(j_decompress_ptr cinfo, const ReadCallbacks* callbacks)
+DecodeStatus ReadMetadata(j_decompress_ptr cinfo, const ReadCallbacks* callbacks)
 {
-    ReadApp1Blocks(cinfo, callbacks);
-    ReadIccProfile(cinfo, callbacks);
+    DecodeStatus status = ReadApp1Blocks(cinfo, callbacks);
+
+    if (status == DecodeStatus::Ok)
+    {
+        status = ReadIccProfile(cinfo, callbacks);
+    }
+
+    return status;
 }

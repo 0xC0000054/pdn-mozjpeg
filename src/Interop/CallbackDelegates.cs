@@ -34,5 +34,6 @@ namespace MozJpegFileType.Interop
     internal delegate IntPtr AllocateSurfaceCallback(int width, int height, out int stride);
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall)]
-    internal delegate void SetMetadataCallback(IntPtr data, int size, MetadataType type);
+    [return: MarshalAs(UnmanagedType.U1)]
+    internal delegate bool SetMetadataCallback(IntPtr data, int size, MetadataType type);
 }

@@ -65,10 +65,6 @@ namespace MozJpegFileType
                         {
                             streamIO.ExceptionInfo.Throw();
                         }
-                        else if (loadState.ExceptionInfo != null)
-                        {
-                            loadState.ExceptionInfo.Throw();
-                        }
                         else
                         {
                             string libraryError = new string(errorInfo.errorMessage);
@@ -81,6 +77,17 @@ namespace MozJpegFileType
                             {
                                 throw new FormatException(libraryError);
                             }
+                        }
+                    }
+                    else if (status == DecodeStatus.CallbackError)
+                    {
+                        if (loadState.ExceptionInfo != null)
+                        {
+                            loadState.ExceptionInfo.Throw();
+                        }
+                        else
+                        {
+                            throw new FormatException("An unknown error occurred when reading the image.");
                         }
                     }
                     else
