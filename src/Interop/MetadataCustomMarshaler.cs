@@ -39,8 +39,8 @@ namespace MozJpegFileType.Interop
             public UIntPtr extendedXmpBlockCount;
         }
 
-        private static readonly int NativeExtendedXmpBlockSize = Marshal.SizeOf(typeof(NativeExtendedXmpBlock));
-        private static readonly int NativeMetadataParamsSize = Marshal.SizeOf(typeof(NativeMetadataParams));
+        private static readonly int NativeExtendedXmpBlockSize = Marshal.SizeOf<NativeExtendedXmpBlock>();
+        private static readonly int NativeMetadataParamsSize = Marshal.SizeOf<NativeMetadataParams>();
         private static readonly MetadataCustomMarshaler instance = new MetadataCustomMarshaler();
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage(
