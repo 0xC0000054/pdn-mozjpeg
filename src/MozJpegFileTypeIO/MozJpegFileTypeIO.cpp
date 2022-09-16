@@ -81,8 +81,8 @@ DecodeStatus ReadImage(
         return DecodeStatus::NullParameter;
     }
 
-    JpegErrorContext errorContext;
-    jpeg_decompress_struct cinfo;
+    JpegErrorContext errorContext{};
+    jpeg_decompress_struct cinfo{};
 
     cinfo.err = jpeg_std_error(&errorContext.mgr);
     cinfo.err->error_exit = error_exit;
@@ -196,8 +196,8 @@ EncodeStatus WriteImage(
         return EncodeStatus::NullParameter;
     }
 
-    JpegErrorContext errorContext;
-    jpeg_compress_struct cinfo;
+    JpegErrorContext errorContext{};
+    jpeg_compress_struct cinfo{};
 
     cinfo.err = jpeg_std_error(&errorContext.mgr);
     cinfo.err->error_exit = error_exit;
