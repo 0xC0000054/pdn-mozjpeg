@@ -18,22 +18,12 @@ namespace
 
     void WriteExifBlock(j_compress_ptr cinfo, const uint8_t* data, size_t dataSize)
     {
-        jpeg_write_m_header(cinfo, App1Marker, static_cast<unsigned int>(dataSize));
-
-        for (size_t i = 0; i < dataSize; i++)
-        {
-            jpeg_write_m_byte(cinfo, data[i]);
-        }
+        jpeg_write_marker(cinfo, App1Marker, static_cast<const JOCTET*>(data), static_cast<unsigned int>(dataSize));
     }
 
     void WriteStandardXmpBlock(j_compress_ptr cinfo, const uint8_t* data, size_t dataSize)
     {
-        jpeg_write_m_header(cinfo, App1Marker, static_cast<unsigned int>(dataSize));
-
-        for (size_t i = 0; i < dataSize; i++)
-        {
-            jpeg_write_m_byte(cinfo, data[i]);
-        }
+        jpeg_write_marker(cinfo, App1Marker, static_cast<const JOCTET*>(data), static_cast<unsigned int>(dataSize));
     }
 
     void WriteExtendedXmpBlocks(j_compress_ptr cinfo, const ExtendedXmpBlock* blocks, size_t blockCount)
@@ -44,12 +34,7 @@ namespace
             const uint8_t* data = block->data;
             const size_t dataSize = block->length;
 
-            jpeg_write_m_header(cinfo, App1Marker, static_cast<unsigned int>(dataSize));
-
-            for (size_t i = 0; i < dataSize; i++)
-            {
-                jpeg_write_m_byte(cinfo, data[i]);
-            }
+            jpeg_write_marker(cinfo, App1Marker, static_cast<const JOCTET*>(data), static_cast<unsigned int>(dataSize));
         }
     }
 }
