@@ -82,40 +82,40 @@ DecodeStatus ReadImage(
     }
 
     JpegErrorContext errorContext{};
-    jpeg_decompress_struct cinfo{};
+    jpeg_decompress_struct dinfo{};
 
-    cinfo.err = jpeg_std_error(&errorContext.mgr);
-    cinfo.err->error_exit = error_exit;
+    dinfo.err = jpeg_std_error(&errorContext.mgr);
+    dinfo.err->error_exit = error_exit;
     memset(errorContext.messageBuffer, 0, _countof(errorContext.messageBuffer));
 
     if (setjmp(errorContext.setjmpBuffer))
     {
         // This block will be jumped to if the JPEG error_exit method is called.
-        jpeg_destroy_decompress(&cinfo);
+        jpeg_destroy_decompress(&dinfo);
 
         HandleErrorMessage(errorContext, errorInfo);
         return DecodeStatus::JpegLibraryError;
     }
 
-    jpeg_create_decompress(&cinfo);
+    jpeg_create_decompress(&dinfo);
 
-    InitializeSourceManager(&cinfo, callbacks);
+    InitializeSourceManager(&dinfo, callbacks);
 
     // Save the EXIF and/or XMP data.
-    jpeg_save_markers(&cinfo, JPEG_APP0 + 1, 0xFFFF);
+    jpeg_save_markers(&dinfo, JPEG_APP0 + 1, 0xFFFF);
     // Save the ICC profile.
-    jpeg_save_markers(&cinfo, JPEG_APP0 + 2, 0xFFFF);
+    jpeg_save_markers(&dinfo, JPEG_APP0 + 2, 0xFFFF);
 
-    jpeg_read_header(&cinfo, true);
+    jpeg_read_header(&dinfo, true);
 
-    cinfo.out_color_space = JCS_RGB;
+    dinfo.out_color_space = JCS_RGB;
 
-    jpeg_calc_output_dimensions(&cinfo);
+    jpeg_calc_output_dimensions(&dinfo);
 
-    if (cinfo.output_width > static_cast<JDIMENSION>(std::numeric_limits<int32_t>::max()) ||
-        cinfo.output_height > static_cast<JDIMENSION>(std::numeric_limits<int32_t>::max()))
+    if (dinfo.output_width > static_cast<JDIMENSION>(std::numeric_limits<int32_t>::max()) ||
+        dinfo.output_height > static_cast<JDIMENSION>(std::numeric_limits<int32_t>::max()))
     {
-        jpeg_destroy_decompress(&cinfo);
+        jpeg_destroy_decompress(&dinfo);
 
         return DecodeStatus::OutOfMemory;
     }
@@ -123,37 +123,37 @@ DecodeStatus ReadImage(
 
     int32_t outputImageStride = 0;
 
-    uint8_t* outputImageScan0 = callbacks->allocateSurface(cinfo.output_width, cinfo.output_height, &outputImageStride);
+    uint8_t* outputImageScan0 = callbacks->allocateSurface(dinfo.output_width, dinfo.output_height, &outputImageStride);
 
     if (outputImageScan0 == nullptr)
     {
-        jpeg_destroy_decompress(&cinfo);
+        jpeg_destroy_decompress(&dinfo);
 
         return DecodeStatus::CallbackError;
     }
 
-    const size_t jpegRowBufferSize = static_cast<size_t>(cinfo.output_width) * static_cast<size_t>(cinfo.output_components);
+    const size_t jpegRowBufferSize = static_cast<size_t>(dinfo.output_width) * static_cast<size_t>(dinfo.output_components);
 
     if (jpegRowBufferSize > std::numeric_limits<JDIMENSION>::max())
     {
-        jpeg_destroy_decompress(&cinfo);
+        jpeg_destroy_decompress(&dinfo);
 
         return DecodeStatus::OutOfMemory;
     }
 
-    JSAMPARRAY scanlines = cinfo.mem->alloc_sarray(
-        reinterpret_cast<j_common_ptr>(&cinfo),
+    JSAMPARRAY scanlines = dinfo.mem->alloc_sarray(
+        reinterpret_cast<j_common_ptr>(&dinfo),
         JPOOL_IMAGE,
         static_cast<JDIMENSION>(jpegRowBufferSize),
         1);
 
-    jpeg_start_decompress(&cinfo);
+    jpeg_start_decompress(&dinfo);
 
     size_t destRow = 0;
 
-    while (cinfo.output_scanline < cinfo.output_height)
+    while (dinfo.output_scanline < dinfo.output_height)
     {
-        jpeg_read_scanlines(&cinfo, scanlines, 1);
+        jpeg_read_scanlines(&dinfo, scanlines, 1);
 
         const JSAMPROW srcRow = scanlines[0];
 
@@ -161,7 +161,7 @@ DecodeStatus ReadImage(
 
         size_t srcIndex = 0;
 
-        for (JDIMENSION x = 0; x < cinfo.output_width; x++)
+        for (JDIMENSION x = 0; x < dinfo.output_width; x++)
         {
             dest->r = srcRow[srcIndex];
             dest->g = srcRow[srcIndex + 1];
@@ -175,10 +175,10 @@ DecodeStatus ReadImage(
         destRow++;
     }
 
-    DecodeStatus status = ReadMetadata(&cinfo, callbacks);
+    DecodeStatus status = ReadMetadata(&dinfo, callbacks);
 
-    jpeg_finish_decompress(&cinfo);
-    jpeg_destroy_decompress(&cinfo);
+    jpeg_finish_decompress(&dinfo);
+    jpeg_destroy_decompress(&dinfo);
 
     return status;
 }
