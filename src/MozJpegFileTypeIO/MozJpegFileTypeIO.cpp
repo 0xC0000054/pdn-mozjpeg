@@ -108,7 +108,7 @@ DecodeStatus ReadImage(
 
     jpeg_read_header(&dinfo, true);
 
-    dinfo.out_color_space = JCS_EXT_BGRA;
+    dinfo.out_color_space = JCS_RGB;
 
     jpeg_calc_output_dimensions(&dinfo);
 
@@ -131,21 +131,47 @@ DecodeStatus ReadImage(
         return DecodeStatus::CallbackError;
     }
 
+    const size_t jpegRowBufferSize = static_cast<size_t>(dinfo.output_width) * static_cast<size_t>(dinfo.output_components);
+
+    if (jpegRowBufferSize > std::numeric_limits<JDIMENSION>::max())
+    {
+        jpeg_destroy_decompress(&dinfo);
+
+        return DecodeStatus::OutOfMemory;
+    }
+
+    JSAMPARRAY scanlines = dinfo.mem->alloc_sarray(
+        reinterpret_cast<j_common_ptr>(&dinfo),
+        JPOOL_IMAGE,
+        static_cast<JDIMENSION>(jpegRowBufferSize),
+        1);
+
     jpeg_start_decompress(&dinfo);
 
     size_t destRow = 0;
 
     while (dinfo.output_scanline < dinfo.output_height)
     {
-        uint8_t* row = outputImageScan0 + (static_cast<size_t>(dinfo.output_scanline) * outputImageStride);
+        jpeg_read_scanlines(&dinfo, scanlines, 1);
 
-        if (jpeg_read_scanlines(&dinfo, &row, 1) != 1)
+        const JSAMPROW srcRow = scanlines[0];
+
+        ColorBgra* dest = reinterpret_cast<ColorBgra*>(outputImageScan0 + (destRow * outputImageStride));
+
+        size_t srcIndex = 0;
+
+        for (JDIMENSION x = 0; x < dinfo.output_width; x++)
         {
-            jpeg_finish_decompress(&dinfo);
-            jpeg_destroy_decompress(&dinfo);
+            dest->r = srcRow[srcIndex];
+            dest->g = srcRow[srcIndex + 1];
+            dest->b = srcRow[srcIndex + 2];
+            dest->a = 255;
 
-            return DecodeStatus::JpegLibraryError;
+            srcIndex += 3;
+            dest++;
         }
+
+        destRow++;
     }
 
     DecodeStatus status = ReadMetadata(&dinfo, callbacks);
