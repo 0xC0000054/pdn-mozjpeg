@@ -221,9 +221,10 @@ EncodeStatus WriteImage(
     cinfo.image_height = bgraImage->height;
     cinfo.input_components = isGrayscale ? 1 : 3;
 #pragma warning(suppress: 26812) // Suppress C26812: Prefer 'enum class' over 'enum'.
-    cinfo.in_color_space = isGrayscale ? JCS_GRAYSCALE : JCS_RGB;
+    cinfo.in_color_space = JCS_EXT_BGRX;
 
     jpeg_set_defaults(&cinfo);
+    jpeg_set_colorspace(&cinfo, isGrayscale ? JCS_GRAYSCALE : JCS_YCbCr);
 
     jpeg_set_quality(&cinfo, options->quality, !options->progressive);
     cinfo.optimize_coding = true;
@@ -270,21 +271,6 @@ EncodeStatus WriteImage(
         }
     }
 
-    const size_t jpegRowBufferSize = static_cast<size_t>(cinfo.image_width) * static_cast<size_t>(cinfo.input_components);
-
-    if (jpegRowBufferSize > std::numeric_limits<JDIMENSION>::max())
-    {
-        jpeg_destroy_compress(&cinfo);
-
-        return EncodeStatus::OutOfMemory;
-    }
-
-    JSAMPARRAY rowPtr = cinfo.mem->alloc_sarray(
-        reinterpret_cast<j_common_ptr>(&cinfo),
-        JPOOL_IMAGE,
-        static_cast<JDIMENSION>(jpegRowBufferSize),
-        1);
-
     jpeg_start_compress(&cinfo, true);
 
     WriteMetadata(&cinfo, metadata);
@@ -311,28 +297,9 @@ EncodeStatus WriteImage(
             }
         }
 
-        const ColorBgra* srcRow = reinterpret_cast<const ColorBgra*>(bgraImage->scan0 + (static_cast<uint64_t>(cinfo.next_scanline) * bgraImage->stride));
-        JSAMPROW dstRow = rowPtr[0];
+        uint8_t* srcRow = bgraImage->scan0 + (static_cast<size_t>(cinfo.next_scanline) * bgraImage->stride);
 
-        for (uint32_t x = 0; x < bgraImage->width; x++)
-        {
-            const ColorBgra pixel = srcRow[x];
-
-            switch (cinfo.input_components)
-            {
-            case 1:
-                dstRow[x] = pixel.r;
-                break;
-            case 3:
-                int index = x * 3;
-                dstRow[index] = pixel.r;
-                dstRow[index + 1] = pixel.g;
-                dstRow[index + 2] = pixel.b;
-                break;
-            }
-        }
-
-        jpeg_write_scanlines(&cinfo, rowPtr, 1);
+        jpeg_write_scanlines(&cinfo, &srcRow, 1);
     }
 
     jpeg_finish_compress(&cinfo);
