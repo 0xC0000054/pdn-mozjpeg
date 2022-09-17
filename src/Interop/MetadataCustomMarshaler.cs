@@ -19,24 +19,24 @@ namespace MozJpegFileType.Interop
     {
         // This must be kept in sync with the ExtendedXmpBlock structure in MozJpegFileTypeIO.h.
         [StructLayout(LayoutKind.Sequential)]
-        private struct NativeExtendedXmpBlock
+        private unsafe struct NativeExtendedXmpBlock
         {
-            public IntPtr data;
-            public UIntPtr length;
+            public void* data;
+            public nuint length;
         }
 
         // This must be kept in sync with the MetadataParams structure in MozJpegFileTypeIO.h.
         [StructLayout(LayoutKind.Sequential)]
-        private struct NativeMetadataParams
+        private unsafe struct NativeMetadataParams
         {
-            public IntPtr exif;
-            public UIntPtr exifSize;
-            public IntPtr iccProfile;
-            public UIntPtr iccProfileSize;
-            public IntPtr xmp;
-            public UIntPtr xmpSize;
-            public IntPtr extendedXmpBlocks;
-            public UIntPtr extendedXmpBlockCount;
+            public void* exif;
+            public nuint exifSize;
+            public void* iccProfile;
+            public nuint iccProfileSize;
+            public void* xmp;
+            public nuint xmpSize;
+            public NativeExtendedXmpBlock* extendedXmpBlocks;
+            public nuint extendedXmpBlockCount;
         }
 
         private static readonly int NativeExtendedXmpBlockSize = Marshal.SizeOf<NativeExtendedXmpBlock>();
@@ -60,44 +60,41 @@ namespace MozJpegFileType.Interop
         {
         }
 
-        public void CleanUpNativeData(IntPtr pNativeData)
+        public unsafe void CleanUpNativeData(IntPtr pNativeData)
         {
-            unsafe
+            if (pNativeData != IntPtr.Zero)
             {
-                if (pNativeData != IntPtr.Zero)
+                NativeMetadataParams* metadata = (NativeMetadataParams*)pNativeData;
+
+                if (metadata->iccProfile != null)
                 {
-                    NativeMetadataParams* metadata = (NativeMetadataParams*)pNativeData;
-
-                    if (metadata->iccProfile != IntPtr.Zero)
-                    {
-                        Marshal.FreeHGlobal(metadata->iccProfile);
-                    }
-
-                    if (metadata->exif != IntPtr.Zero)
-                    {
-                        Marshal.FreeHGlobal(metadata->exif);
-                    }
-
-                    if (metadata->xmp != IntPtr.Zero)
-                    {
-                        Marshal.FreeHGlobal(metadata->xmp);
-
-                        if (metadata->extendedXmpBlocks != IntPtr.Zero)
-                        {
-                            NativeExtendedXmpBlock* blocks = (NativeExtendedXmpBlock*)metadata->extendedXmpBlocks;
-                            uint extendedXmpBlockCount = metadata->extendedXmpBlockCount.ToUInt32();
-
-                            for (uint i = 0; i < extendedXmpBlockCount; i++)
-                            {
-                                Marshal.FreeHGlobal(blocks[i].data);
-                            }
-
-                            Marshal.FreeHGlobal((IntPtr)blocks);
-                        }
-                    }
-
-                    Marshal.FreeHGlobal(pNativeData);
+                    NativeMemory.Free(metadata->iccProfile);
                 }
+
+                if (metadata->exif != null)
+                {
+                    NativeMemory.Free(metadata->exif);
+                }
+
+                if (metadata->xmp != null)
+                {
+                    NativeMemory.Free(metadata->xmp);
+
+                    if (metadata->extendedXmpBlocks != null)
+                    {
+                        NativeExtendedXmpBlock* blocks = metadata->extendedXmpBlocks;
+                        nuint extendedXmpBlockCount = metadata->extendedXmpBlockCount;
+
+                        for (nuint i = 0; i < extendedXmpBlockCount; i++)
+                        {
+                            NativeMemory.Free(blocks[i].data);
+                        }
+
+                        NativeMemory.Free(blocks);
+                    }
+                }
+
+                NativeMemory.Free(metadata);
             }
         }
 
@@ -106,7 +103,7 @@ namespace MozJpegFileType.Interop
             return NativeMetadataParamsSize;
         }
 
-        public IntPtr MarshalManagedToNative(object ManagedObj)
+        public unsafe IntPtr MarshalManagedToNative(object ManagedObj)
         {
             if (ManagedObj == null)
             {
@@ -115,79 +112,74 @@ namespace MozJpegFileType.Interop
 
             MetadataParams metadata = (MetadataParams)ManagedObj;
 
-            IntPtr nativeStructure = Marshal.AllocHGlobal(NativeMetadataParamsSize);
+            NativeMetadataParams* nativeMetadata = (NativeMetadataParams*)NativeMemory.Alloc((uint)NativeMetadataParamsSize);
 
-            unsafe
+            if (metadata.exif != null && metadata.exif.Length > 0)
             {
-                NativeMetadataParams* nativeMetadata = (NativeMetadataParams*)nativeStructure;
-
-                if (metadata.exif != null && metadata.exif.Length > 0)
-                {
-                    nativeMetadata->exif = Marshal.AllocHGlobal(metadata.exif.Length);
-                    Marshal.Copy(metadata.exif, 0, nativeMetadata->exif, metadata.exif.Length);
-                    nativeMetadata->exifSize = new UIntPtr((uint)metadata.exif.Length);
-                }
-                else
-                {
-                    nativeMetadata->exif = IntPtr.Zero;
-                    nativeMetadata->exifSize = UIntPtr.Zero;
-                }
-
-                if (metadata.iccProfile != null && metadata.iccProfile.Length > 0)
-                {
-                    nativeMetadata->iccProfile = Marshal.AllocHGlobal(metadata.iccProfile.Length);
-                    Marshal.Copy(metadata.iccProfile, 0, nativeMetadata->iccProfile, metadata.iccProfile.Length);
-                    nativeMetadata->iccProfileSize = new UIntPtr((uint)metadata.iccProfile.Length);
-                }
-                else
-                {
-                    nativeMetadata->iccProfile = IntPtr.Zero;
-                    nativeMetadata->iccProfileSize = UIntPtr.Zero;
-                }
-
-                if (metadata.standardXmp != null && metadata.standardXmp.Length > 0)
-                {
-                    nativeMetadata->xmp = Marshal.AllocHGlobal(metadata.standardXmp.Length);
-                    Marshal.Copy(metadata.standardXmp, 0, nativeMetadata->xmp, metadata.standardXmp.Length);
-                    nativeMetadata->xmpSize = new UIntPtr((uint)metadata.standardXmp.Length);
-
-                    int extendedXmpBlockCount = metadata.extendedXmpChunks.Count;
-
-                    if (extendedXmpBlockCount > 0)
-                    {
-                        IntPtr extendedXmpBlockLength = new IntPtr((long)extendedXmpBlockCount * NativeExtendedXmpBlockSize);
-                        nativeMetadata->extendedXmpBlocks = Marshal.AllocHGlobal(extendedXmpBlockLength);
-                        nativeMetadata->extendedXmpBlockCount = new UIntPtr((uint)extendedXmpBlockCount);
-
-                        NativeExtendedXmpBlock* blocks = (NativeExtendedXmpBlock*)nativeMetadata->extendedXmpBlocks;
-
-                        for (int i = 0; i < extendedXmpBlockCount; i++)
-                        {
-                            byte[] chunk = metadata.extendedXmpChunks[i];
-
-                            NativeExtendedXmpBlock* block = &blocks[i];
-
-                            block->data = Marshal.AllocHGlobal(chunk.Length);
-                            Marshal.Copy(chunk, 0, block->data, chunk.Length);
-                            block->length = new UIntPtr((uint)chunk.Length);
-                        }
-                    }
-                    else
-                    {
-                        nativeMetadata->extendedXmpBlocks = IntPtr.Zero;
-                        nativeMetadata->extendedXmpBlockCount = UIntPtr.Zero;
-                    }
-                }
-                else
-                {
-                    nativeMetadata->xmp = IntPtr.Zero;
-                    nativeMetadata->xmpSize = UIntPtr.Zero;
-                    nativeMetadata->extendedXmpBlocks = IntPtr.Zero;
-                    nativeMetadata->extendedXmpBlockCount = UIntPtr.Zero;
-                }
+                nativeMetadata->exif = NativeMemory.Alloc((uint)metadata.exif.Length);
+                metadata.exif.AsSpan().CopyTo(new Span<byte>(nativeMetadata->exif, metadata.exif.Length));
+                nativeMetadata->exifSize = (uint)metadata.exif.Length;
+            }
+            else
+            {
+                nativeMetadata->exif = null;
+                nativeMetadata->exifSize = 0;
             }
 
-            return nativeStructure;
+            if (metadata.iccProfile != null && metadata.iccProfile.Length > 0)
+            {
+                nativeMetadata->iccProfile = NativeMemory.Alloc((uint)metadata.iccProfile.Length);
+                metadata.iccProfile.AsSpan().CopyTo(new Span<byte>(nativeMetadata->iccProfile, metadata.iccProfile.Length));
+                nativeMetadata->iccProfileSize = (uint)metadata.iccProfile.Length;
+            }
+            else
+            {
+                nativeMetadata->iccProfile = null;
+                nativeMetadata->iccProfileSize = 0;
+            }
+
+            if (metadata.standardXmp != null && metadata.standardXmp.Length > 0)
+            {
+                nativeMetadata->xmp = NativeMemory.Alloc((uint)metadata.standardXmp.Length);
+                metadata.standardXmp.AsSpan().CopyTo(new Span<byte>(nativeMetadata->xmp, metadata.standardXmp.Length));
+                nativeMetadata->xmpSize = (uint)metadata.standardXmp.Length;
+
+                int extendedXmpBlockCount = metadata.extendedXmpChunks.Count;
+
+                if (extendedXmpBlockCount > 0)
+                {
+                    nativeMetadata->extendedXmpBlocks = (NativeExtendedXmpBlock*)NativeMemory.Alloc((uint)extendedXmpBlockCount,
+                                                                                                    (uint)NativeExtendedXmpBlockSize);
+                    nativeMetadata->extendedXmpBlockCount = (uint)extendedXmpBlockCount;
+
+                    NativeExtendedXmpBlock* blocks = nativeMetadata->extendedXmpBlocks;
+
+                    for (int i = 0; i < extendedXmpBlockCount; i++)
+                    {
+                        ReadOnlySpan<byte> chunk = metadata.extendedXmpChunks[i];
+
+                        NativeExtendedXmpBlock* block = &blocks[i];
+
+                        block->data = NativeMemory.Alloc((uint)chunk.Length);
+                        chunk.CopyTo(new Span<byte>(block->data, chunk.Length));
+                        block->length = (uint)chunk.Length;
+                    }
+                }
+                else
+                {
+                    nativeMetadata->extendedXmpBlocks = null;
+                    nativeMetadata->extendedXmpBlockCount = 0;
+                }
+            }
+            else
+            {
+                nativeMetadata->xmp = null;
+                nativeMetadata->xmpSize = 0;
+                nativeMetadata->extendedXmpBlocks = null;
+                nativeMetadata->extendedXmpBlockCount = 0;
+            }
+
+            return (IntPtr)nativeMetadata;
         }
 
         public object MarshalNativeToManaged(IntPtr pNativeData)
